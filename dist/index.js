@@ -27,16 +27,19 @@ const express = __importStar(require("express"));
 const http = __importStar(require("http"));
 const socketio = __importStar(require("socket.io"));
 const app = express.default();
+app.use(express.static("public"));
 app.get("/", (_req, res) => {
     res.send({ uptime: process.uptime() });
 });
 const server = http.createServer(app);
 const io = new socketio.Server(server);
-io.on('connection', client => {
-    client.on('event', data => {
-        console.log("someone connected");
+io.on('connection', socket => {
+    socket.emit('message', "Welcome to ChatCord");
+    socket.broadcast.emit('message', "A new users has joined the room");
+    socket.on('chatMessage', msg => io.emit("message", msg));
+    socket.on('disconnect', () => {
+        io.emit('message', "someone disconnected");
     });
-    client.on('disconnect', () => { console.log("someone disconnected"); });
 });
 server.listen(5000, () => {
     console.log("Running at localhost:5000");
